@@ -1,14 +1,13 @@
 <?php
 
-require_once('libraries/TeamSpeak3/Exception.php');
-require_once('libraries/TeamSpeak3/Helper/Exception.php');
-require_once('libraries/TeamSpeak3/Helper/Signal.php');
-require_once('libraries/TeamSpeak3/Helper/Uri.php');
+namespace Tests\Unit\Helper;
+
 
 use PHPUnit\Framework\TestCase;
 use \PHPUnit\Framework\Constraint\IsType as PHPUnit_IsType;
-
-use \TeamSpeak3_Helper_Uri as TS3_URI;
+use TeamSpeak3\Helpers\HelpersException;
+use TeamSpeak3\Helpers\StringHelper;
+use TeamSpeak3\Helpers\Uri;
 
 class UriTest extends TestCase
 {
@@ -56,19 +55,19 @@ class UriTest extends TestCase
   ];
   
   public function testConstructEmptyURI() {
-    $this->expectException(TeamSpeak3_Helper_Exception::class);
+    $this->expectException(HelpersException::class);
     $this->expectExceptionMessage('invalid URI scheme');
     
     // TS3_URI should throw exception on non-alphanumeric in <scheme> of URI
-    $uri = new TS3_URI('');
+    $uri = new Uri('');
   }
   
   public function testConstructInvalidScheme() {
     $this->expectException(TeamSpeak3_Helper_Exception::class);
     $this->expectExceptionMessage('invalid URI scheme');
     
-    // TS3_URI should throw exception on non-alphanumeric in <scheme> of URI
-    $uri = new TS3_URI(str_replace(
+    // Uri should throw exception on non-alphanumeric in <scheme> of URI
+    $uri = new Uri(str_replace(
       'serverquery',
       'server&&&&query', // non-alphanumeric
       $this->mock['test_uri'][0]));
@@ -79,7 +78,7 @@ class UriTest extends TestCase
   }
   
   public function testCheckUser() {
-    $uri = new TS3_URI($this->mock['test_uri'][0]);
+    $uri = new Uri($this->mock['test_uri'][0]);
     
     $ASCIIValid = [
       48,57,65,90,97,122,45,95,46,33,126,42,39,40,41,91,93,59,58,38,61,43,36,44
@@ -105,7 +104,7 @@ class UriTest extends TestCase
   }
   
   public function testCheckPass() {
-    $uri = new TS3_URI($this->mock['test_uri'][0]);
+    $uri = new Uri($this->mock['test_uri'][0]);
     
     $ASCIIValid = [
       48,57,65,90,97,122,45,95,46,33,126,42,39,40,41,91,93,59,58,38,61,43,36,44
@@ -139,7 +138,7 @@ class UriTest extends TestCase
   }
   
   public function testCheckPath() {
-    $uri = new TS3_URI($this->mock['test_uri'][1]);
+    $uri = new Uri($this->mock['test_uri'][1]);
     
     // NOTE: Similar, but different valid characters than previous tests.
     // '0-9A-Za-z-_.!~*'()[]:@&=+$,;/' and url escaped hex '%XX'
@@ -171,7 +170,7 @@ class UriTest extends TestCase
   }
   
   public function testCheckQuery() {
-    $uri = new TS3_URI($this->mock['test_uri'][1]);
+    $uri = new Uri($this->mock['test_uri'][1]);
     
     // NOTE: Similar, but different valid characters than previous tests.
     // '0-9A-Za-z-_.!~*'()[]:@&=+$,;/#' and url escaped hex '%XX'
@@ -194,7 +193,7 @@ class UriTest extends TestCase
   }
   
   public function testCheckFragment() {
-    $uri = new TS3_URI($this->mock['test_uri'][1]);
+    $uri = new Uri($this->mock['test_uri'][1]);
     
     // NOTE: Similar, but different valid characters than previous tests.
     // '0-9A-Za-z-_.!~*'()[]:@&=+$,;/#' and url escaped hex '%XX'
@@ -217,7 +216,7 @@ class UriTest extends TestCase
   }
   
   public function testIsValid() {
-    $uri = new TS3_URI($this->mock['test_uri'][3]);
+    $uri = new Uri($this->mock['test_uri'][3]);
     
     $this->assertTrue($uri->isValid());
     
@@ -225,58 +224,58 @@ class UriTest extends TestCase
   }
   
   /**
-   * @param TS3_URI $uri
+   * @param Uri $uri
    * @depends testIsValid
    */
-  public function testGetScheme(TS3_URI $uri) {
+  public function testGetScheme(Uri $uri) {
     $this->assertEquals('serverquery', $uri->getScheme());
     $this->assertInstanceOf(
-      \TeamSpeak3_Helper_String::class,
+      StringHelper::class,
       $uri->getScheme());
   }
   
   /**
-   * @param TS3_URI $uri
+   * @param Uri $uri
    *
    * @depends testIsValid
    */
-  public function testGetUser(TS3_URI $uri) {
+  public function testGetUser(Uri $uri) {
     $this->assertEquals('username', $uri->getUser());
     $this->assertInstanceOf(
-      \TeamSpeak3_Helper_String::class,
+      StringHelper::class,
       $uri->getUser());
   }
   
   /**
-   * @param TS3_URI $uri
+   * @param Uri $uri
    *
    * @depends testIsValid
    */
-  public function testGetPass(TS3_URI $uri) {
+  public function testGetPass(Uri $uri) {
     $this->assertEquals('password', $uri->getPass());
     $this->assertInstanceOf(
-      \TeamSpeak3_Helper_String::class,
+      StringHelper::class,
       $uri->getPass());
   }
   
   /**
-   * @param TS3_URI $uri
+   * @param Uri $uri
    *
    * @depends testIsValid
    */
-  public function testGetHost(TS3_URI $uri) {
+  public function testGetHost(Uri $uri) {
     $this->assertEquals('127.0.0.1', $uri->getHost());
     $this->assertInstanceOf(
-      \TeamSpeak3_Helper_String::class,
+      StringHelper::class,
       $uri->getHost());
   }
   
   /**
-   * @param TS3_URI $uri
+   * @param Uri $uri
    *
    * @depends testIsValid
    */
-  public function testGetPort(TS3_URI $uri) {
+  public function testGetPort(Uri $uri) {
     $this->assertEquals(10011, $uri->getPort());
     $this->assertInternalType(
       PHPUnit_IsType::TYPE_INT,
@@ -284,24 +283,24 @@ class UriTest extends TestCase
   }
   
   /**
-   * @param TS3_URI $uri
+   * @param Uri $uri
    *
    * @depends testIsValid
    */
-  public function testGetPath(TS3_URI $uri) {
+  public function testGetPath(Uri $uri) {
     // NOTE: getPath() is never used in framework, add tests for consistency.
     $this->assertEquals('/', $uri->getPath());
     $this->assertInstanceOf(
-      \TeamSpeak3_Helper_String::class,
+      StringHelper::class,
       $uri->getPath());
   }
   
   /**
-   * @param TS3_URI $uri
+   * @param Uri $uri
    *
    * @depends testIsValid
    */
-  public function testGetQuery(TS3_URI $uri) {
+  public function testGetQuery(Uri $uri) {
     // NOTE: getPath() is never used in framework, add tests for consistency.
     $this->assertEquals(
       ['server_port' => '9987', 'blocking' => '0'],
@@ -312,14 +311,14 @@ class UriTest extends TestCase
   }
   
   /**
-   * @param TS3_URI $uri
+   * @param Uri $uri
    *
    * @depends testIsValid
    */
-  public function testGetFragment(TS3_URI $uri) {
+  public function testGetFragment(Uri $uri) {
     $this->assertEquals('no_query_clients', $uri->getFragment());
     $this->assertInstanceOf(
-      \TeamSpeak3_Helper_String::class,
+      StringHelper::class,
       $uri->getFragment());
   }
   

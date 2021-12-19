@@ -1,9 +1,10 @@
 <?php
 
+namespace Tests\Unit\Helper;
+
 use PHPUnit\Framework\TestCase;
 use \PHPUnit\Framework\Constraint\IsType as PHPUnit_IsType;
-
-require_once('libraries/TeamSpeak3/Helper/Char.php');
+use \TeamSpeak3\Helpers\CharHelper;
 
 class CharTest extends TestCase
 {
@@ -11,7 +12,7 @@ class CharTest extends TestCase
     $testLower = chr(97);
     $testUpper = chr(65);
     $testOrd   = 97;
-    $char = new \TeamSpeak3_Helper_Char(chr(97));
+    $char = new CharHelper(chr(97));
     
     $this->assertTrue($char->isLetter());
     $this->assertTrue($char->isPrintable());
@@ -32,7 +33,7 @@ class CharTest extends TestCase
     $this->assertEquals($testOrd, hexdec($char->toHex())); // hexdec('61') 
     $this->assertEquals(
       $testLower,
-      (string)\TeamSpeak3_Helper_Char::fromHex('61'));
+      (string) CharHelper::fromHex('61'));
     
     $this->assertEquals($testLower, $char->toString()); // Expect: 97
     $this->assertInternalType(PHPUnit_IsType::TYPE_STRING, $char->toString());

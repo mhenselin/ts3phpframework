@@ -8,7 +8,7 @@ if (!file_exists($file)) {
     }
 }
 
-$autoload = require_once $file;
+$autoload = require $file;
 
 // todo: combine backward-compatibility checks by existance rather than version.
 // Creating an alias for PHPUnit version check

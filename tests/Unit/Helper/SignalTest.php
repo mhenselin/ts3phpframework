@@ -1,16 +1,13 @@
 <?php
 
-require_once('libraries/TeamSpeak3/Exception.php');
-require_once('libraries/TeamSpeak3/Helper/Exception.php');
-require_once('libraries/TeamSpeak3/Helper/Signal.php');
-require_once('libraries/TeamSpeak3/Helper/Signal/Handler.php');
-require_once('libraries/TeamSpeak3/Helper/Signal/Exception.php');
+namespace Tests\Unit\Helper;
 
 use PHPUnit\Framework\TestCase;
 use \PHPUnit\Framework\Constraint\IsType as PHPUnit_IsType;
 
-use \TeamSpeak3_Helper_Signal as TS3_Signal;
-use \TeamSpeak3_Helper_Signal_Handler as TS3_Signal_Handler;
+use TeamSpeak3\Helpers\Signal\Handler;
+use TeamSpeak3\Helpers\Signal\HelpersSignalException;
+use TeamSpeak3\Helpers\SignalHelper;
 
 class SignalTest extends TestCase
 {
@@ -20,38 +17,39 @@ class SignalTest extends TestCase
   protected static $callback = __CLASS__ . '::onEvent';
   protected static $testString = '!@w~//{tI_8G77<qS+g*[Gb@u`pJ^2>rO*f=KS:8Yj';
   
-  protected function setUp() {
+  protected function setUp(): void {
     static::$cTriggers = [];
-    foreach(TS3_Signal::getInstance()->getSignals() as $signal)
-      TS3_Signal::getInstance()->clearHandlers($signal);
+    foreach(SignalHelper::getInstance()->getSignals() as $signal) {
+		SignalHelper::getInstance()->clearHandlers($signal);
+	}
   }
   
-  public function testGetInstance() {
-    $snapshot = clone TS3_Signal::getInstance();
-    $this->assertEquals($snapshot, TS3_Signal::getInstance());
-    $this->assertEmpty(TS3_Signal::getInstance()->getSignals());
+  public function testGetInstance(): void {
+    $snapshot = clone SignalHelper::getInstance();
+    $this->assertEquals($snapshot, SignalHelper::getInstance());
+    $this->assertEmpty(SignalHelper::getInstance()->getSignals());
   }
   
-  public function testGetCallbackHash() {
+  public function testGetCallbackHash(): void {
     $this->assertEquals(
       md5(static::$callback),
-      TS3_Signal::getInstance()->getCallbackHash(static::$callback));
+      SignalHelper::getInstance()->getCallbackHash(static::$callback));
   }
   
-  public function testGetCallbackHashException() {
-    $this->expectException(TeamSpeak3_Helper_Signal_Exception::class);
+  public function testGetCallbackHashException(): void {
+    $this->expectException(HelpersSignalException::class);
     $this->expectExceptionMessage('invalid callback specified');
-    TS3_Signal::getInstance()->getCallbackHash([]);
+    SignalHelper::getInstance()->getCallbackHash([]);
   }
   
-  public function testSubscribe() {
-    $snapshot = clone TS3_Signal::getInstance();
-    $instSignal = TS3_Signal::getInstance();
+  public function testSubscribe(): void {
+    $snapshot = clone SignalHelper::getInstance();
+    $instSignal = SignalHelper::getInstance();
     
     $signalHandler = $instSignal->subscribe(static::$signal, static::$callback);
     // Test state: returned TeamSpeak3_Helper_Signal_Handler
-    $this->assertInstanceOf(TS3_Signal_Handler::class, $signalHandler);
-    $this->assertNotEquals($snapshot, TS3_Signal::getInstance());
+    $this->assertInstanceOf(Handler::class, $signalHandler);
+    $this->assertNotEquals($snapshot, SignalHelper::getInstance());
   
     // Test state: subscribed signals
     $signals  = $instSignal->getSignals();
@@ -64,18 +62,18 @@ class SignalTest extends TestCase
     $this->assertInternalType(PHPUnit_IsType::TYPE_ARRAY, $handlers);
     $this->assertEquals(1, count($handlers));
     $this->assertArrayHasKey(
-      TS3_Signal::getInstance()->getCallbackHash(static::$callback),
+      SignalHelper::getInstance()->getCallbackHash(static::$callback),
       $handlers);
-    $handler = $handlers[TS3_Signal::getInstance()->getCallbackHash(static::$callback)];
+    $handler = $handlers[SignalHelper::getInstance()->getCallbackHash(static::$callback)];
     $this->assertInstanceOf(TeamSpeak3_Helper_Signal_Handler::class, $handler); 
     $this->assertEquals($signalHandler, $handler);
   }
   
-  public function testEmit() {
-    $callbackHash = TS3_Signal::getInstance()
+  public function testEmit(): void {
+    $callbackHash = SignalHelper::getInstance()
       ->getCallbackHash(__CLASS__ . '::onEvent');
-    TS3_Signal::getInstance()->subscribe(static::$signal, static::$callback);
-    $response = TS3_Signal::getInstance()->emit(static::$signal, static::$testString);
+    SignalHelper::getInstance()->subscribe(static::$signal, static::$callback);
+    $response = SignalHelper::getInstance()->emit(static::$signal, static::$testString);
     $this->assertEquals(static::$testString, $response);
     $this->assertInternalType(gettype(static::$testString), $response);
     
@@ -86,8 +84,8 @@ class SignalTest extends TestCase
       static::$cTriggers[$callbackHash]);
   }
   
-  public function testSubscribeTwo() {
-    $instSignal = TS3_Signal::getInstance();
+  public function testSubscribeTwo(): void {
+    $instSignal = SignalHelper::getInstance();
     $signalHandler1 = $instSignal->subscribe(
       static::$signal, static::$callback);
     $signalHandler2 = $instSignal->subscribe(
@@ -114,8 +112,8 @@ class SignalTest extends TestCase
     $this->assertEquals($signalHandler2, $handler2);
   }
   
-  public function testEmitToTwoSubscribers() {
-    $instSignal = TS3_Signal::getInstance();
+  public function testEmitToTwoSubscribers(): void {
+    $instSignal = SignalHelper::getInstance();
     $callbackHash1 = $instSignal->getCallbackHash(__CLASS__ . '::onEvent');
     $callbackHash2 = $instSignal->getCallbackHash(__CLASS__ . '::onEvent2');
     
@@ -137,7 +135,7 @@ class SignalTest extends TestCase
   }
 
   public static function onEvent($data) {
-    $signature = TS3_Signal::getInstance()
+    $signature = SignalHelper::getInstance()
       ->getCallbackHash(__CLASS__ . '::onEvent');
     
     static::$cTriggers[$signature] = count(static::$cTriggers).'-'.$data;
@@ -145,7 +143,7 @@ class SignalTest extends TestCase
   }
   
   public static function onEvent2($data) {
-    $signature = TS3_Signal::getInstance()
+    $signature = SignalHelper::getInstance()
       ->getCallbackHash(__CLASS__ . '::onEvent2');
   
     static::$cTriggers[$signature] = count(static::$cTriggers).'-'.$data;
